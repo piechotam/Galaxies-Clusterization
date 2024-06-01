@@ -45,21 +45,10 @@ def extract_and_resize(image, threshold, target_size=(128, 128)):
     x_center = x + w // 2
     y_center = y + h // 2
 
-    x1 = max(0, x_center - max_dim // 2)
-    y1 = max(0, y_center - max_dim // 2)
-    x2 = min(image.shape[1], x_center + max_dim // 2)
-    y2 = min(image.shape[0], y_center + max_dim // 2)
-
-    if x2 - x1 < max_dim:
-        if x1 == 0:
-            x2 = min(image.shape[1], x1 + max_dim)
-        else:
-            x1 = max(0, x2 - max_dim)
-    if y2 - y1 < max_dim:
-        if y1 == 0:
-            y2 = min(image.shape[0], y1 + max_dim)
-        else:
-            y1 = max(0, y2 - max_dim)
+    x1 = max(0, x_center - 10 - max_dim // 2)
+    y1 = max(0, y_center - 10 - max_dim // 2)
+    x2 = min(image.shape[1], x_center + 10 + max_dim // 2)
+    y2 = min(image.shape[0], y_center + 10 + max_dim // 2)
 
     img_cropped = image[y1:y2, x1:x2]
     resized_image = cv.resize(img_cropped, target_size, interpolation=cv.INTER_AREA)
@@ -68,7 +57,6 @@ def extract_and_resize(image, threshold, target_size=(128, 128)):
 
 def convert_to_grayscale(image):
     return cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-
 
 def normalize_image(image):
     """Normalizes the image."""

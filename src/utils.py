@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import random
 import os
+from sklearn.model_selection import train_test_split
 
 def find_extensions(path):
     extensions = {}
@@ -26,6 +27,16 @@ def read_filenames(path):
     
     return galaxies
 
+def prepare_datasets(dataset, size):
+    if size > len(dataset):
+        raise ValueError(f'Size too large, dataset contains {len(dataset)} observations.')
+    random.seed(21)
+    random.shuffle(dataset)
+    dataset = dataset[:size]
+    dataset_train, dataset_test = train_test_split(dataset, test_size=0.2, random_state=21)
+    dataset_train, dataset_val = train_test_split(dataset_train, test_size=0.2, random_state=21)
+
+    return dataset_train, dataset_val, dataset_test
 
 def show_galaxies(galaxies, rand = False):
     figure, axes = plt.subplots(nrows=5,ncols=5,figsize=(13,13))
