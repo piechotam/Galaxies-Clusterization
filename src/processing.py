@@ -3,7 +3,7 @@ import numpy as np
 
 def load_image(filename):
     """Given an image filename, reads the image"""
-    return cv.imread(filename)
+    return cv.imread(f'../data/images/{filename}')
 
 def find_bounding_boxes(image, threshold):
     """Finds bounding boxes in image with provided threshold."""
@@ -70,3 +70,30 @@ def process_image(filename, threshold, target_size=(128, 128)):
     processed_image = normalize_image(image_grayscale)
 
     return processed_image
+
+def extract_features(image, model):
+    img = np.array(image)
+    img = np.stack((img,) * 3, axis=-1)
+    reshaped_img = img.reshape(1, 80, 80, 3)
+    features = model.predict(reshaped_img, verbose=0)
+    return features
+
+def convert_to_feature_vectors(filenames, autoencoder, model, size=None):
+    if not size:
+        size = len(filenames)
+
+    features = []
+
+    for i, filename in enumerate(filenames[:size]):
+        if i % 1000 == 999:
+            print(f'{i + 1} out of {size}')
+        image = process_image(filename, 20, (80, 80))
+        image = autoencoder.predict(np.array([image]), verbose=0)[0]    
+        feat = extract_features(image, model)
+        features.append(feat)
+
+
+    features = np.array(features)
+    features = features.reshape(features.shape[0], -1)
+
+    return features
