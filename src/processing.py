@@ -1,5 +1,11 @@
 import cv2 as cv
 import numpy as np
+from skimage.feature import hog
+from skimage import exposure
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+import matplotlib.pyplot as plt
 
 def load_image(filename):
     """Given an image filename, reads the image"""
@@ -78,10 +84,18 @@ def extract_features(image, model):
     features = model.predict(reshaped_img, verbose=0)
     return features
 
-def convert_to_feature_vectors(filenames, autoencoder, img_size, model=None, size=None):
+def extract_hog_features(image):
+    resized_image = cv.resize(image, (64, 64), interpolation=cv.INTER_AREA)
+    features, _ = hog(resized_image, orientations=9, pixels_per_cell=(8, 8),
+                              cells_per_block=(2, 2), visualize=True, block_norm='L2-Hys')
+    
+    return features
+
+def convert_to_feature_vectors(filenames, autoencoder, img_size, hog=False, model=None, size=None):
     """
     Converting an image to a feature vector. If a model is provided, we use it during the proces.
-    Otherwise, the image of size n by n is simply reshaped into vector of length n^2.
+    Otherwise, if hog = True we convert images to vector using HOG (Histogram of Oriented Gradients)
+    Else, the image of size n by n is simply reshaped into vector of length n^2.
     """
     if not size:
         size = len(filenames)
@@ -96,6 +110,10 @@ def convert_to_feature_vectors(filenames, autoencoder, img_size, model=None, siz
 
         if model: 
             feat = extract_features(image, model)
+        
+        elif hog:
+            feat = extract_hog_features(image)
+
         else:
             feat = image.reshape(-1)
         
@@ -106,3 +124,37 @@ def convert_to_feature_vectors(filenames, autoencoder, img_size, model=None, siz
     features = features.reshape(features.shape[0], -1)
 
     return features
+
+def analyse_pca(features):
+    print('Scaling data...')
+    scaler = StandardScaler()
+    features = scaler.fit_transform(features)
+
+    print('Fitting pca with 700 components...')
+    pca = PCA(n_components=700, random_state=21)
+    pca.fit(features)
+
+    plt.figure(figsize=(12, 6))
+    xi = np.arange(0, 700, step=1)
+    y = np.cumsum(pca.explained_variance_ratio_)
+
+    plt.ylim(0.0,1.1)
+    plt.plot(xi, y, linestyle='--', color='b')
+
+    plt.xlabel('Number of Components')
+    plt.xticks(np.arange(0, 701, step=50)) #change from 0-based array index to 1-based human-readable label
+    plt.ylabel('Cumulative variance (%)')
+    plt.title('The number of components needed to explain variance')
+
+    plt.axhline(y=0.95, color='r', linestyle='-')
+    plt.text(30, 0.9, '95% cut-off threshold', color = 'red', fontsize=16)
+
+    plt.show()
+
+    return pca
+
+def find_n_comp(pca, percentage):
+    n_components_percentage = np.argmax(np.cumsum(pca.explained_variance_ratio_) >= percentage / 100) + 1
+    print(f'Number of components for {percentage}% explainability: {n_components_percentage}')
+    
+    return n_components_percentage
