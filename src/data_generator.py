@@ -30,6 +30,8 @@ class ImageDataGenerator(Sequence):
         self.image_filenames = image_filenames
         self.batch_size = batch_size
         self.img_size = img_size
+        self.indices = np.arange(len(self.image_filenames))
+        np.random.shuffle(self.indices)
 
     def __len__(self):
         return int(np.ceil(len(self.image_filenames) / self.batch_size))

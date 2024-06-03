@@ -78,7 +78,11 @@ def extract_features(image, model):
     features = model.predict(reshaped_img, verbose=0)
     return features
 
-def convert_to_feature_vectors(filenames, autoencoder, model, size=None):
+def convert_to_feature_vectors(filenames, autoencoder, img_size, model=None, size=None):
+    """
+    Converting an image to a feature vector. If a model is provided, we use it during the proces.
+    Otherwise, the image of size n by n is simply reshaped into vector of length n^2.
+    """
     if not size:
         size = len(filenames)
 
@@ -87,9 +91,14 @@ def convert_to_feature_vectors(filenames, autoencoder, model, size=None):
     for i, filename in enumerate(filenames[:size]):
         if i % 1000 == 999:
             print(f'{i + 1} out of {size}')
-        image = process_image(filename, 20, (80, 80))
-        image = autoencoder.predict(np.array([image]), verbose=0)[0]    
-        feat = extract_features(image, model)
+        image = process_image(filename, 20, img_size)
+        image = autoencoder.predict(np.array([image]), verbose=0)[0]
+
+        if model: 
+            feat = extract_features(image, model)
+        else:
+            feat = image.reshape(-1)
+        
         features.append(feat)
 
 
