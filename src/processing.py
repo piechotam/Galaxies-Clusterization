@@ -80,7 +80,7 @@ def process_image(filename, threshold, target_size=(128, 128)):
 def extract_features(image, model):
     img = np.array(image)
     img = np.stack((img,) * 3, axis=-1)
-    reshaped_img = img.reshape(1, 80, 80, 3)
+    reshaped_img = img.reshape(1, 224, 224, 3)
     features = model.predict(reshaped_img, verbose=0)
     return features
 
@@ -108,7 +108,8 @@ def convert_to_feature_vectors(filenames, autoencoder, img_size, hog=False, mode
         image = process_image(filename, 20, img_size)
         image = autoencoder.predict(np.array([image]), verbose=0)[0]
 
-        if model: 
+        if model:
+            image = cv.resize(image, (224, 224), cv.INTER_AREA)
             feat = extract_features(image, model)
         
         elif hog:
